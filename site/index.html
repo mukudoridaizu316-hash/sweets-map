@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>全国スイーツ探索マップ｜47都道府県から探す</title>
+<link rel="preconnect" href="https://tile.openstreetmap.org"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<style>
+:root{--ink:#2c3435;--accent:#a84841;--muted:#6e7778;--line:#e8e5e0;--sand:#faf7f2;--panel:#fff;--teal:#1e6a63}
+*{box-sizing:border-box}html,body{margin:0;padding:0}body{background:var(--sand);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:var(--ink);line-height:1.58}
+button,input,select{font:inherit}button{cursor:pointer}a{color:var(--teal)}a:hover{text-decoration:none}
+header{background:linear-gradient(110deg,#fbede1,#f0f1e9);border-bottom:1px solid var(--line);padding:24px max(16px,calc((100vw - 1380px)/2)) 20px}header .kicker{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.17em}header h1{margin:4px 0 4px;font-size:clamp(25px,3.8vw,39px)}header p{font-size:14px;color:#565f60;margin:0;max-width:850px}
+.stamp{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.stamp span{background:#ffffffae;border:1px solid #e5d9cf;border-radius:100px;padding:6px 11px;font-size:12px}
+.wrap{margin:auto;max-width:1400px;padding:18px 16px 40px}.regions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:11px}
+.pref-topline{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:13px;background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px}.pref-topline label{font-weight:700;display:flex;align-items:center;gap:12px}.pref-topline select{min-width:190px;max-width:100%;padding:9px 12px;background:white;border:1px solid #d7c9c1;border-radius:9px;font-size:15px}.pref-topline .hint{color:var(--muted);font-size:12px}.region-intro{margin:0 0 7px;font-weight:650;font-size:13px;color:#505b5b}.pref-grid{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:17px}.pref-button{border:1px solid #e3d5ca;background:#fff;padding:8px 11px;border-radius:10px;font-size:13px;font-weight:600}.pref-button.active{background:#a84841;color:white;border-color:#a84841}.pref-button b{font-size:11px;font-weight:450;opacity:.72;margin-left:5px}.pref-button.empty-pref{color:#747e7e;border-style:dashed}.pref-button.active.empty-pref{color:white}.region-note{font-size:12px;color:var(--muted);margin:-4px 0 12px}
+.region{border:1px solid #e3d5ca;background:white;padding:10px 5px;border-radius:11px;font-size:14px;font-weight:650}.region.active{background:var(--ink);color:white;border-color:var(--ink)}.region b{font-weight:450;opacity:.7;font-size:11px;margin-left:4px}
+.searchbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:15px}.searchbar input{background:white;flex:2;min-width:180px;padding:11px 12px;border:1px solid #ddd8d2;border-radius:10px}.searchbar select{flex:1;min-width:120px;background:white;border:1px solid #ddd8d2;border-radius:10px;padding:11px 8px}.control{border:1px solid #dcd5cc;background:white;border-radius:10px;padding:10px 13px}.control.primary{background:#a84841;color:white;border-color:#a84841}.layout{display:grid;grid-template-columns:minmax(330px,.95fr) minmax(380px,1.05fr);gap:15px;align-items:start}.panel{background:white;border:1px solid var(--line);border-radius:17px;padding:15px;min-width:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.panel h2{font-size:17px;margin:0}.panel-head small{font-size:12px;color:var(--muted)}#cards{display:grid;gap:10px;max-height:640px;overflow:auto}.shop{border:1px solid #e7dfd6;border-radius:13px;padding:13px;background:#fff;display:flex;gap:9px;justify-content:space-between;cursor:pointer}.shop.selected{background:#fff8f2;border-color:#d5a18c}.shop .body{min-width:0;flex:1}.shop h3{font-size:15px;margin:0 0 3px}.shop .small{font-size:12px;color:var(--muted);margin:2px 0}.shop p{font-size:13px;margin:8px 0}.shop .sweet{color:#894c38;font-weight:700;font-size:13px}.shop .action{display:flex;gap:12px;font-size:12px;flex-wrap:wrap}.shop .action a{white-space:nowrap}.fav{background:none;border:1px solid #e7d8d3;border-radius:9px;width:34px;height:34px;flex:none;color:#a84841;font-size:20px}.fav.isfav{background:#fff0ed}
+.map-panel{position:sticky;top:12px}.map-sub{font-size:12px;color:var(--muted);margin:5px 0 12px}.map{height:min(65vh,560px);min-height:350px;border-radius:12px;overflow:hidden;background:#e7eee8}.map-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.map-toolbar a{font-size:13px;text-decoration:none;background:#f2f4f2;padding:8px 11px;border-radius:8px}.map-toolbar span{font-size:12px;color:var(--muted)}.leaflet-popup-content{line-height:1.5}.leaflet-popup-content strong{font-size:14px}
+.help{font-size:12px;color:var(--muted);margin:12px 3px 0;line-height:1.8}.hidden{display:none}.empty{color:var(--muted);padding:24px;text-align:center}
+footer{font-size:12px;max-width:1000px;color:var(--muted);line-height:1.8;margin-top:16px}
+@media(max-width:890px){.layout{grid-template-columns:1fr}.map-panel{position:static;order:-1}#cards{max-height:none}.map{height:380px}}
+@media(max-width:560px){.regions{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.region{font-size:12px;padding:9px 2px}.region b{display:none}.pref-topline{display:block;padding:11px}.pref-topline label{justify-content:space-between;margin-bottom:6px}.pref-topline select{min-width:0;width:66%}.pref-button{padding:8px 9px}.pref-grid{gap:6px}.region-note{line-height:1.5}.wrap{padding:11px 9px 28px}.panel{padding:10px;border-radius:13px}.map{height:330px;min-height:280px}.shop{padding:10px}}
+</style></head><body>
+<header><div class="kicker">SWEETS SCOUT · JAPAN</div><h1>全国スイーツ探索マップ</h1>
+<p>ネットの取材記事や店舗情報から探したスイーツ店。<b>47都道府県から行きたい県を選ぶ</b>と、その県の地図と掲載店を表示します。地方は県を探すための見出しです。</p>
+<div class="stamp"><span id="total">全国37店舗</span><span>47都道府県から選択</span><span id="coverage">掲載中の県数を確認中</span><span id="updated">更新：2026年11月9日</span></div></header>
+<div class="wrap">
+<div class="pref-topline"><label for="prefSelect">表示する都道府県 <select id="prefSelect" aria-label="表示する都道府県"></select></label><span class="hint" id="prefSummary">県名を選択すると地図がその県へ移動します。</span></div>
+<p class="region-intro">地方から探す（下の県名を選ぶと地図が移動します）</p><nav class="regions" id="regionBar" aria-label="都道府県を探す地方を選択"></nav>
+<nav class="pref-grid" id="prefBar" aria-label="都道府県別マップを選択"></nav>
+<div class="searchbar"><input id="search" type="search" placeholder="店名・県名・スイーツ名で検索" aria-label="キーワード検索"/><select id="genre" aria-label="スイーツの種類"><option value="">すべての種類</option></select><button class="control" id="favOnly">♡ お気に入り</button><button class="control primary" id="random">おまかせ推薦</button></div>
+<div class="layout">
+<section class="panel"><div class="panel-head"><h2 id="listTitle">選択した都道府県のスイーツ</h2><small id="count"></small></div><div id="cards"></div><p class="help">各店の名前を押すと、右の地図でその場所を確認できます。♡ を押すとお気に入り登録。詳しい場所は Google マップのリンクから確認できます。</p></section>
+<section class="panel map-panel"><div class="panel-head"><h2 id="mapTitle">選択した都道府県の店舗マップ</h2><small id="mapCount">店舗を読み込み中</small></div><div class="map-sub" id="mapSub">赤いピンが店舗です。ピンを押すとスイーツと住所を確認できます。</div><div id="map" class="map"></div><div class="map-toolbar"><button type="button" class="control" id="focusPref">この都道府県全体を表示</button><a id="selectedGoogle" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">選択店舗をGoogleマップで開く</a><span id="geoStatus">地図を読み込み中</span></div><p class="help">地図：© OpenStreetMap contributors。住所からのピン配置には OpenStreetMap Nominatim の検索結果を使います。場所を特定できない店舗は、店舗ごとの Google マップリンクをご利用ください。</p></section>
+</div><footer>公開情報に基づくおすすめであり、実際の試食評価ではありません。営業日・取扱商品は各店の公式サイトや紹介記事でご確認ください。自動調査の結果は最新版のHTMLへ反映されます。ダウンロード済みの古いHTMLには自動反映されません。データ更新時はライブラリにある最新版を再度開いてください。検索・地図のため外部サービスへ接続します。</footer></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+// SHOPS_DATA_BEGIN
+const BASE_SHOPS=[{"id":1,"name":"La Cerise（ラ・スリーズ）","region":"北海道","pref":"北海道","city":"札幌市","address":"北海道札幌市中央区宮の森1条11丁目1-28","sweet":"ガトー・バスクと季節の焼き菓子","genre":"焼き菓子","note":"土曜日中心の営業。フランス伝統菓子と季節のコンフィチュールを扱う小さな店。","source":"https://la-cerise.jp/","added":"2026-11-06","verified":"2026-11-06"},{"id":2,"name":"森々（モリシン）","region":"北海道","pref":"北海道","city":"札幌市","address":"北海道札幌市中央区宮の森3条11丁目2-16","sweet":"米粉のシフォンケーキ","genre":"ケーキ","note":"道産素材のシフォンとバスクチーズケーキ。週2日ほどの営業で、売り切れに注意。","source":"https://www.poroco.co.jp/newsreport/3784/","added":"2026-11-06","verified":"2026-11-06"},{"id":3,"name":"Bakeshop C’est mimi","region":"東北","pref":"青森県","city":"弘前市","address":"青森県弘前市富田2-3-26","sweet":"生ドーナツ","genre":"ドーナツ","note":"母娘で営むベイクショップ。クリーム入り生ドーナツや焼き菓子を販売。","source":"https://hirosaki-navi.jp/cestmimi2026","added":"2026-11-06","verified":"2026-11-06"},{"id":4,"name":"GRAND MERCI（グランメルシー）","region":"東北","pref":"青森県","city":"弘前市","address":"青森県弘前市野田1丁目3-16","sweet":"弘前りんごのアップルパイ","genre":"パイ","note":"地元農家のりんごを生かしたアップルパイが主力。ケーキも豊富。","source":"https://hirosaki-grandmerci.com/","added":"2026-11-06","verified":"2026-11-06"},{"id":5,"name":"パティスリー レ・ド・シェーブル","region":"東北","pref":"岩手県","city":"宮古市","address":"岩手県宮古市大通4-5-10","sweet":"イボンヌ ムースアイス","genre":"アイス","note":"ヤギミルクを使ったムースアイス。冷凍でも解凍しても楽しめる。","source":"https://hanako.tokyo/food/464148/","added":"2026-11-06","verified":"2026-11-06"},{"id":6,"name":"小田喜商店","region":"関東","pref":"茨城県","city":"笠間市","address":"茨城県笠間市吉岡185-1","sweet":"栗やの裏ごし渋皮パイ","genre":"パイ","note":"笠間・岩間の栗を渋皮ごと使う、栗の風味が主役のパイ。","source":"https://hanako.tokyo/food/464146/","added":"2026-11-06","verified":"2026-11-06"},{"id":7,"name":"café suave bis","region":"関東","pref":"群馬県","city":"伊勢崎市","address":"群馬県伊勢崎市茂呂町2-2838-1","sweet":"クラッチボックス","genre":"焼き菓子","note":"柑橘やチーズなど地元素材を生かした、焼き菓子の詰め合わせ。","source":"https://hanako.tokyo/food/464146/","added":"2026-11-06","verified":"2026-11-06"},{"id":8,"name":"THE CIRCUS 鎌倉店","region":"関東","pref":"神奈川県","city":"鎌倉市","address":"神奈川県鎌倉市坂ノ下9-17 星ノ夜月ノ下A","sweet":"アラゴスタ","genre":"パイ","note":"パリパリのコロネ型パイに自家製カスタードを詰めた一品。","source":"https://hanako.tokyo/food/464146/","added":"2026-11-06","verified":"2026-11-06"},{"id":9,"name":"くらざしきスイーツ","region":"中部","pref":"新潟県","city":"新潟市","address":"新潟県新潟市中央区明石2-100-1","sweet":"みそプリン","genre":"プリン","note":"老舗味噌蔵が手がけるスイーツ。麹の甘みを生かした味噌プリン。","source":"https://hanako.tokyo/food/464154/","added":"2026-11-06","verified":"2026-11-06"},{"id":10,"name":"パティスリー・オー・スガ","region":"中部","pref":"長野県","city":"長野市","address":"長野県長野市鶴賀権堂町2228","sweet":"たぬきさんケーキ","genre":"ケーキ","note":"権堂の路地裏の小さなケーキ店。懐かしいバタークリームのたぬきケーキ。","source":"https://patisserie-aux-suga.com/","added":"2026-11-06","verified":"2026-11-06"},{"id":11,"name":"茶菓子屋コンチェ","region":"中部","pref":"静岡県","city":"静岡市","address":"静岡県静岡市清水区入船町13-15 1F","sweet":"カカオどら焼き","genre":"和菓子","note":"クラフトチョコ専門店による、お茶と一緒に味わうカカオの和菓子。","source":"https://hanako.tokyo/food/464154/","added":"2026-11-06","verified":"2026-11-06"},{"id":12,"name":"hazeru coffee BAKE STAND","region":"北陸","pref":"富山県","city":"富山市","address":"富山県富山市神通本町1-10-2","sweet":"発酵バターのスコーン","genre":"焼き菓子","note":"富山駅近くのテイクアウト店。コーヒーとスコーンの組み合わせ。","source":"https://www.toyamashi-kankoukyoukai.jp/gourmet/hazeru-coffee-bake-stand/","added":"2026-11-06","verified":"2026-11-06"},{"id":13,"name":"パティスリー ショコラトリー オーディネール","region":"北陸","pref":"石川県","city":"金沢市","address":"石川県金沢市高尾南2-183 グレイス高尾B","sweet":"ボンボンショコラとプチガトー","genre":"チョコレート","note":"2026年に金沢へ移転。フランス菓子とショコラを扱う専門店。","source":"https://ordinaire.thebase.in/about","added":"2026-11-06","verified":"2026-11-06"},{"id":14,"name":"ちさリスのお家。","region":"北陸","pref":"福井県","city":"福井市","address":"福井県福井市中央1-1-25 くるふ福井駅内","sweet":"ケンケーラ","genre":"和菓子","note":"福井の郷土菓子「けんけら」を現代風にアレンジ。","source":"https://hanako.tokyo/food/464154/","added":"2026-11-06","verified":"2026-11-06"},{"id":15,"name":"パティスリーラシーヌ","region":"近畿","pref":"大阪府","city":"枚方市","address":"大阪府枚方市養父丘1-2-58","sweet":"モンブランとほうじ茶ロール","genre":"ケーキ","note":"地元の取材記事で紹介された、甘さ控えめのケーキと季節菓子。","source":"https://www.hira2.jp/gourmet/racines-20251017.html","added":"2026-11-06","verified":"2026-11-06"},{"id":16,"name":"KOTONOWA","region":"近畿","pref":"奈良県","city":"田原本町","address":"奈良県磯城郡田原本町阪手623-1","sweet":"テリーヌどら焼き 大和抹茶","genre":"和菓子","note":"大和抹茶テリーヌと生クリームをココア風味のどら焼き生地で挟む。","source":"https://hanako.tokyo/food/464156/","added":"2026-11-06","verified":"2026-11-06"},{"id":17,"name":"UCHU wagashi","region":"近畿","pref":"京都府","city":"京都市","address":"京都府京都市上京区寺町通丸太町上ル信富町307","sweet":"GUMMY","genre":"和菓子","note":"落雁で知られる和菓子店が手がける、新感覚の和風グミ。","source":"https://hanako.tokyo/food/464156/","added":"2026-11-06","verified":"2026-11-06"},{"id":18,"name":"宝月堂","region":"中国","pref":"鳥取県","city":"鳥取市","address":"鳥取県鳥取市二階町3-121","sweet":"MOCHI cube","genre":"和菓子","note":"四角い大福に自家製こしあんと生クリーム。","source":"https://hanako.tokyo/food/464159/","added":"2026-11-06","verified":"2026-11-06"},{"id":19,"name":"ベッカライコンディトライヒダカ","region":"中国","pref":"島根県","city":"大田市","address":"島根県大田市大森町ハ90-1","sweet":"エンガディナー","genre":"焼き菓子","note":"石見銀山の町の菓子店。クルミの蜂蜜キャラメルを包むスイス菓子。","source":"https://hanako.tokyo/food/464159/","added":"2026-11-06","verified":"2026-11-06"},{"id":20,"name":"PEAceNUTS Café","region":"中国","pref":"広島県","city":"呉市","address":"広島県呉市焼山三ツ石町1-9","sweet":"ピースナッツクッキー 瀬戸内レモン","genre":"焼き菓子","note":"世羅高原の落花生と瀬戸内レモンを使ったクッキー。","source":"https://hanako.tokyo/food/464159/","added":"2026-11-06","verified":"2026-11-06"},{"id":21,"name":"TABBY ICE CREAM","region":"四国","pref":"徳島県","city":"鳴門市","address":"徳島県鳴門市撫養町南浜字蛭子前東62-3","sweet":"植物性クラフトアイス","genre":"アイス","note":"乳・卵・小麦を使わないクラフトアイス。季節の地元素材も。","source":"https://hanako.tokyo/food/464159/","added":"2026-11-06","verified":"2026-11-06"},{"id":22,"name":"讃岐三白","region":"四国","pref":"香川県","city":"高松市","address":"香川県高松市番町1-10-51","sweet":"ドゥーブルショコラタルト","genre":"パイ","note":"讃岐和三盆糖を生かした濃厚チョコレートタルト。","source":"https://hanako.tokyo/food/464159/","added":"2026-11-06","verified":"2026-11-06"},{"id":23,"name":"Story of cheesecake.","region":"四国","pref":"愛媛県","city":"松山市","address":"愛媛県松山市南江戸1-14-2","sweet":"ブラッドオレンジチーズケーキ","genre":"ケーキ","note":"愛媛のブラッドオレンジを使う、柑橘の香りが特徴のチーズケーキ。","source":"https://hanako.tokyo/food/464159/","added":"2026-11-06","verified":"2026-11-06"},{"id":24,"name":"Le Mameco（ル・マメコ）","region":"九州","pref":"福岡県","city":"福岡市","address":"福岡県福岡市中央区平尾3-10-33","sweet":"レモンケーキ","genre":"焼き菓子","note":"しっとりした生地にレモンの酸味とバニラの香り。","source":"https://hanako.tokyo/food/464161/","added":"2026-11-06","verified":"2026-11-06"},{"id":25,"name":"洋菓子工房アンティーク","region":"九州","pref":"大分県","city":"豊後大野市","address":"大分県豊後大野市緒方町天神50","sweet":"VEGEタルト","genre":"チョコレート","note":"大分県産米粉と野菜パウダーを使うカラフルなタルト。","source":"https://hanako.tokyo/food/464161/","added":"2026-11-06","verified":"2026-11-06"},{"id":26,"name":"菓te-ri（カテーリ）","region":"九州","pref":"宮崎県","city":"椎葉村","address":"宮崎県東臼杵郡椎葉村下福良1820-6","sweet":"宮崎バターサンド","genre":"焼き菓子","note":"高千穂産発酵バターなど宮崎の素材を生かすバターサンド。","source":"https://hanako.tokyo/food/464161/","added":"2026-11-06","verified":"2026-11-06"},{"id":27,"name":"うさぎの相棒","region":"沖縄","pref":"沖縄県","city":"八重瀬町","address":"沖縄県島尻郡八重瀬町仲座20-3","sweet":"プリン大福・シフォンケーキ","genre":"和菓子","note":"八重瀬町の小さな焼き菓子店。プリン大福が取材記事の注目商品。","source":"https://feeljapan.net/okinawa/article/2026-01-06-30108/","added":"2026-11-06","verified":"2026-11-06"},{"id":28,"name":"オヤツコマツ","region":"沖縄","pref":"沖縄県","city":"伊是名村","address":"沖縄県島尻郡伊是名村字伊是名743","sweet":"スコーンと島素材のクラッカー","genre":"焼き菓子","note":"伊是名島にある小さな焼き菓子店。島産素材を使ったおやつ。","source":"https://gajumaru.okinawa.jp/ja/oyatsu-komatsu/","added":"2026-11-06","verified":"2026-11-06"},{"id":29,"name":"THREE STARS","region":"沖縄","pref":"沖縄県","city":"北谷町","address":"沖縄県中頭郡北谷町砂辺344","sweet":"ヴィーガンアイスクリーム","genre":"アイス","note":"フルーツ・豆乳クリーム・きび砂糖で作る植物性アイス。営業日は要確認。","source":"https://hanako.tokyo/food/464161/","added":"2026-11-06","verified":"2026-11-06"},{"id":30,"name":"リリスのお菓子","region":"東北","pref":"秋田県","city":"秋田市","address":"秋田県秋田市手形山崎町10-55","sweet":"琥珀糖とフラワーゼリー","genre":"和菓子","note":"色彩豊かな手作り琥珀糖と花を閉じ込めたゼリー。","source":"https://lilith-sweets.com/","added":"2026-11-09","verified":"2026-11-09"},{"id":31,"name":"峰月堂 小白川本店","region":"東北","pref":"山形県","city":"山形市","address":"山形県山形市小白川町3丁目7-39","sweet":"まるまんまラフランスパイ・だだちゃ豆の蒸どら","genre":"和菓子","note":"昭和24年創業。季節の和洋菓子を幅広く製造。","source":"https://www.hogetsudo.com/","added":"2026-11-09","verified":"2026-11-09"},{"id":32,"name":"パティスリー・ソワール","region":"関東","pref":"栃木県","city":"栃木市","address":"栃木県栃木市旭町24-9","sweet":"マカロンと日本酒ゼリー","genre":"ケーキ","note":"栃木市の洋菓子店。栃木の酒蔵の日本酒を使ったゼリーも。","source":"https://soir-cake.com/","added":"2026-11-09","verified":"2026-11-09"},{"id":33,"name":"パティスリー サンヴェール 川口本店","region":"関東","pref":"埼玉県","city":"川口市","address":"埼玉県川口市西青木5-10-27","sweet":"極バームと季節のフルーツケーキ","genre":"ケーキ","note":"手作りの副材料にもこだわる、1988年創業の川口本店。","source":"https://www.sunverl.com/","added":"2026-11-09","verified":"2026-11-09"},{"id":34,"name":"Sweets Alyssum（スイーツアリッサム）","region":"関東","pref":"千葉県","city":"八千代市","address":"千葉県八千代市高津699-11","sweet":"オーダーケーキと季節の生菓子","genre":"ケーキ","note":"旬のフルーツやオーガニックチョコレートを使用。","source":"https://www.alyssum.jp/","added":"2026-11-09","verified":"2026-11-09"},{"id":35,"name":"小さな洋菓子店 Spoon","region":"関東","pref":"埼玉県","city":"秩父市","address":"埼玉県秩父市本町3-2","sweet":"クロッカンシュークリームと季節のフルーツタルト","genre":"ケーキ","note":"秩父の小さな洋菓子店。旬の果物を使うタルトが並ぶ。","source":"https://patisserie-spoon.jp/","added":"2026-11-09","verified":"2026-11-09"},{"id":36,"name":"パティスリーモア","region":"関東","pref":"埼玉県","city":"さいたま市","address":"埼玉県さいたま市南区南浦和3-3-17","sweet":"ごつごつシュー・南ナンロール","genre":"ケーキ","note":"南浦和の街の菓子店。シュークリームやロールケーキが看板。","source":"https://patisserie-moa.jp/","added":"2026-11-09","verified":"2026-11-09"},{"id":37,"name":"ロタンティック 南浦和本店","region":"関東","pref":"埼玉県","city":"さいたま市","address":"埼玉県さいたま市南区文蔵2-29-19 ksマンション文蔵1F","sweet":"ガトーフロマージュバスクとフランス菓子","genre":"ケーキ","note":"2013年開業。正統派フランス菓子を軸に生菓子と焼き菓子を製造。","source":"https://lauthentique2013.com/","added":"2026-11-09","verified":"2026-11-09"}];
+// SHOPS_DATA_END
+const PREFECTURES_BY_REGION={
+ "北海道":["北海道"],
+ "東北":["青森県","岩手県","宮城県","秋田県","山形県","福島県"],
+ "関東":["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県"],
+ "中部":["新潟県","山梨県","長野県","岐阜県","静岡県","愛知県"],
+ "北陸":["富山県","石川県","福井県"],
+ "近畿":["三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県"],
+ "中国":["鳥取県","島根県","岡山県","広島県","山口県"],
+ "四国":["徳島県","香川県","愛媛県","高知県"],
+ "九州":["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県"],
+ "沖縄":["沖縄県"]
+};
+const REGIONS=Object.keys(PREFECTURES_BY_REGION);
+const ALL_PREFECTURES=Object.values(PREFECTURES_BY_REGION).flat();
+const REGION_FOR_PREF=Object.fromEntries(Object.entries(PREFECTURES_BY_REGION).flatMap(([region,prefs])=>prefs.map(p=>[p,region])));
+// 都道府県庁所在地付近の概略座標。店が未掲載の県も地図を正しく切り替えるために使用。
+const PREF_CENTERS={
+ "北海道":[43.06,141.35,7],
+ "青森県":[40.82,140.74,9],"岩手県":[39.70,141.15,9],"宮城県":[38.27,140.87,9],"秋田県":[39.72,140.10,9],"山形県":[38.26,140.34,9],"福島県":[37.76,140.47,9],
+ "茨城県":[36.37,140.47,9],"栃木県":[36.56,139.88,9],"群馬県":[36.39,139.06,9],"埼玉県":[35.86,139.65,10],"千葉県":[35.61,140.12,10],"東京都":[35.69,139.69,10],"神奈川県":[35.45,139.64,10],
+ "新潟県":[37.90,139.02,9],"山梨県":[35.66,138.57,10],"長野県":[36.65,138.18,9],"岐阜県":[35.39,136.72,9],"静岡県":[34.98,138.38,9],"愛知県":[35.18,136.91,10],
+ "富山県":[36.70,137.21,9],"石川県":[36.56,136.66,9],"福井県":[36.06,136.22,9],
+ "三重県":[34.73,136.51,9],"滋賀県":[35.01,135.87,10],"京都府":[35.02,135.76,9],"大阪府":[34.69,135.50,10],"兵庫県":[34.69,135.18,9],"奈良県":[34.68,135.83,10],"和歌山県":[34.23,135.17,9],
+ "鳥取県":[35.50,134.24,9],"島根県":[35.47,133.05,9],"岡山県":[34.66,133.93,9],"広島県":[34.40,132.46,9],"山口県":[34.19,131.47,9],
+ "徳島県":[34.07,134.56,9],"香川県":[34.34,134.04,10],"愛媛県":[33.84,132.77,9],"高知県":[33.56,133.53,9],
+ "福岡県":[33.59,130.40,9],"佐賀県":[33.26,130.30,9],"長崎県":[32.75,129.88,9],"熊本県":[32.79,130.74,9],"大分県":[33.24,131.61,9],"宮崎県":[31.91,131.42,9],"鹿児島県":[31.60,130.56,9],
+ "沖縄県":[26.21,127.68,8]
+};
+const qs=(s)=>document.querySelector(s);const safe=(s)=>String(s||'').replace(/[&<>"']/g,(x)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const google=(s)=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.name+' '+s.address);
+const PREF_STORAGE_KEY='sweets_selected_prefecture_v1';
+let initialPref='京都府';
+try{const saved=localStorage.getItem(PREF_STORAGE_KEY);if(ALL_PREFECTURES.includes(saved))initialPref=saved;}catch(e){}
+let shops=BASE_SHOPS.slice(),pref=initialPref,browseRegion=REGION_FOR_PREF[initialPref],genre='',query='',favOnly=false,selectedId=null,cache={};
+const rememberPref=()=>{try{localStorage.setItem(PREF_STORAGE_KEY,pref)}catch(e){}};
+try{cache=JSON.parse(localStorage.getItem('sweets_geocodes_v2')||'{}')}catch(e){}
+let fav=new Set();try{fav=new Set(JSON.parse(localStorage.getItem('sweets_fav_v2')||'[]'))}catch(e){}
+const persist=()=>{try{localStorage.setItem('sweets_geocodes_v2',JSON.stringify(cache));localStorage.setItem('sweets_fav_v2',JSON.stringify([...fav]))}catch(e){}};
+let map=null,layer=null,mapToken=0,queue=Promise.resolve(),lastGeocodeAt=0;
+if(typeof L!=='undefined'){const start=PREF_CENTERS[pref];map=L.map('map',{scrollWheelZoom:false}).setView([start[0],start[1]],start[2]);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);layer=L.featureGroup().addTo(map)}
+else{qs('#geoStatus').textContent='地図ライブラリに接続できません。各店のGoogleマップをご利用ください';}
+function inView(){return shops.filter(s=>s.pref===pref&&(!genre||genre===s.genre)&&(!favOnly||fav.has(s.id))&&[s.name,s.pref,s.city,s.sweet,s.note,s.genre].join(' ').toLowerCase().includes(query));}
+function mapPoint(s){let p=cache[s.id];return p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon)?p:null;}
+function searchGeocode(s){return new Promise(resolve=>{queue=queue.then(async()=>{if(mapPoint(s)||cache[s.id]?.missing){resolve(mapPoint(s));return;}const sleep=Math.max(0,1100-(Date.now()-lastGeocodeAt));if(sleep)await new Promise(r=>setTimeout(r,sleep));lastGeocodeAt=Date.now();let result=null;
+for(let q of [s.address,s.name+' '+s.pref+' '+s.city]){try{let u='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=jp&accept-language=ja&q='+encodeURIComponent(q);let r=await fetch(u,{headers:{Accept:'application/json'}});if(!r.ok)throw Error('geocoding '+r.status);let rows=await r.json();if(rows.length){result={lat:parseFloat(rows[0].lat),lon:parseFloat(rows[0].lon),label:rows[0].display_name,query:q};break;}}catch(e){console.warn(e);}}if(result)cache[s.id]=result;else cache[s.id]={missing:true};persist();resolve(result)}).catch(()=>resolve(null));});}
+function showPins(list){
+  if(!layer)return;
+  layer.clearLayers();
+  let displayed=0;
+  for(const s of list){
+    const p=mapPoint(s);if(!p)continue;
+    const m=L.marker([p.lat,p.lon]).addTo(layer);
+    m.bindPopup('<strong>'+safe(s.name)+'</strong><div>'+safe(s.sweet)+'</div><div>'+safe(s.address)+'</div><a target="_blank" rel="noopener noreferrer" href="'+google(s)+'">Googleマップで確認</a>');
+    m.on('click',()=>{selectedId=s.id;renderCards()});
+    displayed++;
+  }
+  qs('#mapCount').textContent=displayed+' / '+list.length+'店舗を表示';
+}
+// 県が変わった時に、現在選んだ都道府県のみに移動する。
+// 古い非同期検索が終わっても地図を移動させず、ピンだけを追加する。
+function focusPrefMap(list){
+  if(!map)return;
+  const c=PREF_CENTERS[pref];
+  const pts=list.map(mapPoint).filter(Boolean).map(p=>[p.lat,p.lon]);
+  if(pts.length===list.length && pts.length>1){
+    map.fitBounds(pts,{padding:[28,28],maxZoom:12,animate:false});
+  }else if(pts.length===1 && list.length===1){
+    map.setView(pts[0],Math.max(c[2],11),{animate:false});
+  }else{
+    map.setView([c[0],c[1]],c[2],{animate:false});
+  }
+}
+async function updateMap(list,recenter=false){
+  if(!map)return;
+  const token=++mapToken;
+  showPins(list);
+  if(recenter)focusPrefMap(list);
+  const missing=list.filter(s=>!mapPoint(s) && !cache[s.id]?.missing);
+  if(!missing.length){qs('#geoStatus').textContent=pref+'を表示中'+(list.length?'（住所確認済みの店舗を表示）':'（掲載店はまだありません）');return;}
+  qs('#geoStatus').textContent=pref+'の住所を確認中（'+(list.length-missing.length)+'/'+list.length+'）';
+  for(const s of missing){
+    await searchGeocode(s);
+    if(token!==mapToken)return;
+    showPins(list);
+    qs('#geoStatus').textContent=pref+'の住所を確認中（'+list.filter(s=>mapPoint(s)).length+'/'+list.length+'）';
+  }
+  qs('#geoStatus').textContent=pref+'を表示中。ピンがない店舗はGoogleマップで確認してください';
+}
+function renderCards(){let list=inView();qs('#count').textContent=list.length+'店舗';qs('#listTitle').textContent=pref+'のスイーツ';qs('#mapTitle').textContent=pref+'の店舗マップ';qs('#cards').innerHTML=list.length?list.map(s=>'<article class="shop '+(selectedId===s.id?'selected':'')+'" data-id="'+s.id+'" tabindex="0"><div class="body"><h3>'+safe(s.name)+'</h3><div class="small">'+safe(s.pref+' '+s.city)+' ／ '+safe(s.genre)+'</div><div class="sweet">'+safe(s.sweet)+'</div><p>'+safe(s.note)+'</p><div class="action"><a href="'+safe(s.source)+'" target="_blank" rel="noopener noreferrer">情報元</a><a href="'+google(s)+'" target="_blank" rel="noopener noreferrer">Googleマップ</a></div></div><button class="fav '+(fav.has(s.id)?'isfav':'')+'" title="お気に入り" data-fav="'+s.id+'" aria-label="お気に入り">'+(fav.has(s.id)?'♥':'♡')+'</button></article>').join(''):'<div class="empty">'+(shops.some(s=>s.pref===pref)?'検索条件に合う店はありません。条件を変更してください。':'この都道府県は現在掲載店がありません。今後の調査で追加します。')+'</div>';
+let s=list.find(x=>x.id===selectedId)||list[0];qs('#selectedGoogle').href=s?google(s):'https://www.google.com/maps/';}
+function selectPref(next){
+  if(!ALL_PREFECTURES.includes(next))return;
+  pref=next;browseRegion=REGION_FOR_PREF[next];selectedId=null;rememberPref();render(true);
+}
+function renderPrefBar(){
+  qs('#regionBar').innerHTML=REGIONS.map(r=>'<button type="button" class="region '+(browseRegion===r?'active':'')+'" data-region="'+r+'" aria-pressed="'+(browseRegion===r)+'">'+r+' <b>'+shops.filter(s=>s.region===r).length+'</b></button>').join('');
+  qs('#prefBar').innerHTML=PREFECTURES_BY_REGION[browseRegion].map(p=>{const count=shops.filter(s=>s.pref===p).length;return '<button type="button" class="pref-button '+(pref===p?'active ':'')+(count?'':'empty-pref')+'" data-pref="'+p+'" aria-pressed="'+(pref===p)+'">'+p+' <b>'+count+'</b></button>';}).join('');
+}
+function render(recenter=false){
+  renderPrefBar();qs('#prefSelect').value=pref;
+  qs('#total').textContent='全国'+shops.length+'店舗';
+  qs('#coverage').textContent='掲載中'+new Set(shops.map(s=>s.pref)).size+'都道府県';
+  qs('#prefSummary').textContent=pref+'：'+shops.filter(s=>s.pref===pref).length+'店舗を掲載';
+  qs('#favOnly').textContent=favOnly?'♥ お気に入りのみ':'♡ お気に入り';
+  renderCards();updateMap(inView(),recenter);
+}
+qs('#regionBar').addEventListener('click',e=>{let b=e.target.closest('[data-region]');if(b){browseRegion=b.dataset.region;renderPrefBar();}});
+qs('#prefBar').addEventListener('click',e=>{let b=e.target.closest('[data-pref]');if(b)selectPref(b.dataset.pref);});
+qs('#prefSelect').addEventListener('change',e=>selectPref(e.target.value));
+qs('#cards').addEventListener('click',e=>{let b=e.target.closest('[data-fav]');if(b){const id=Number(b.dataset.fav);fav.has(id)?fav.delete(id):fav.add(id);persist();renderCards();return;}if(e.target.closest('a'))return;let a=e.target.closest('[data-id]');if(a){selectedId=Number(a.dataset.id);renderCards();const item=shops.find(s=>s.id===selectedId);const p=item&&mapPoint(item);if(p&&map){map.setView([p.lat,p.lon],14);layer.eachLayer(l=>{if(l.getLatLng().lat===p.lat&&l.getLatLng().lng===p.lon)l.openPopup()})}}});
+qs('#search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();render(false)});
+qs('#genre').addEventListener('change',e=>{genre=e.target.value;render(false)});
+qs('#favOnly').addEventListener('click',()=>{favOnly=!favOnly;render(false)});
+qs('#random').addEventListener('click',()=>{let all=shops.filter(s=>(!genre||s.genre===genre)&&(!favOnly||fav.has(s.id))&&[s.name,s.pref,s.city,s.sweet,s.note,s.genre].join(' ').toLowerCase().includes(query));if(!all.length)return;let s=all[Math.floor(Math.random()*all.length)];selectPref(s.pref);selectedId=s.id;renderCards();let p=mapPoint(s);if(p&&map)map.setView([p.lat,p.lon],14);});
+qs('#focusPref').addEventListener('click',()=>focusPrefMap(inView()));
+qs('#prefSelect').innerHTML=REGIONS.map(r=>'<optgroup label="'+r+'">'+PREFECTURES_BY_REGION[r].map(p=>'<option value="'+p+'">'+p+'（'+shops.filter(s=>s.pref===p).length+'店舗）</option>').join('')+'</optgroup>').join('');
+qs('#genre').insertAdjacentHTML('beforeend',[...new Set(shops.map(s=>s.genre))].sort().map(g=>'<option value="'+safe(g)+'">'+safe(g)+'</option>').join(''));
+render(true);if(map)setTimeout(()=>map.invalidateSize(),400);
+</script></body></html>

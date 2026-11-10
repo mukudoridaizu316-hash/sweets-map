@@ -1,0 +1,77 @@
+name: Research sweets, validate and publish map
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+      - 'site/**'
+      - 'scripts/**'
+      - '.github/workflows/refresh-and-publish.yml'
+
+concurrency:
+  group: sweets-map-publishing
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  refresh_and_deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout data and site
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scan Japanese local sweets news into unverified queue
+        run: python scripts/discover.py
+      - name: Re-check curated evidence before admitting any shops
+        run: python scripts/accept_verified.py
+      - name: Update only map data block and header stamps
+        run: python scripts/build.py
+      - name: Validate shop schema, regions and existing map features
+        run: python scripts/validate.py
+      - name: Run integrity regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('site/index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,re.S)
+          Path('/tmp/map-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/map-inline.js
+      - name: Record weekly activity without altering shops
+        run: python scripts/heartbeat.py
+      - name: Commit only actual data changes (if any)
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/shops.json data/discovered_articles.json data/automation_status.json site/index.html
+          if ! git diff --staged --quiet; then
+            git commit -m 'Automatic verified sweets map update'
+            git push
+          fi
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
