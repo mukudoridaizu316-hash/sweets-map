@@ -40,3 +40,21 @@ ChatGPT の定期タスクが承認待ちで停止する問題を避けるため
 python scripts/build.py
 python scripts/validate.py
 ```
+
+
+## Google マイマップで閲覧する（推奨）
+
+これまでの独自HTMLマップに代わり、Google マイマップに登録できるCSVを自動生成します。
+
+- [最新のマイマップ用CSVをダウンロード](https://mukudoridaizu316-hash.github.io/sweets-map/google-mymaps.csv)
+- [Google マイマップを開く](https://www.google.com/maps/d/)
+- インポートの位置情報列は **住所**、目印のタイトル列は **店名** を指定
+- **地方** 列で色分けできます。住所の自動位置判定が間違っていないか初回に確認してください
+- iPhoneのGoogleマップアプリからは「保存済み」→「マップ」で作成したマイマップを閲覧できます
+
+### 更新の重要な制限
+
+GitHub Actions は確認済みの店舗データ（`data/shops.json`）をもとに `site/google-mymaps.csv` を自動生成し、公開URLに置きます。しかし **Google マイマップはこのURLの更新を自動追従しません**。新店舗の反映にはマイマップのレイヤメニューから **「再インポートしてマージ」→「一致するアイテムを更新」** を使って最新CSVを取り込みます。「店舗ID」を一致項目に選べます。単なる「追加」は重複するため使用しないでください。Google側の地図を無断で変更する仕組みは設けていません。
+
+検証されていないニュース候補はCSVに入れません。GitHubとChatGPTライブラリの店舗データ形式は変更しません。
+
