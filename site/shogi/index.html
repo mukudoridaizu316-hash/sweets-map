@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10202c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>将棋 | アスオとの対局</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:#f2f5f6;background:#0e1c26;--panel:#172b37;--line:#34505d;--muted:#a7b9c3;--accent:#efc276;--sente:#6ed0e3;--gote:#f6ad69}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#0e1c26}button{font:inherit;cursor:pointer}button:disabled{opacity:.43;cursor:default}button:focus-visible{outline:3px solid #f0ca75;outline-offset:2px}
+.app{max-width:1480px;padding:16px 24px 28px;margin:0 auto;min-height:100dvh}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:12px}.brandmark{width:39px;height:39px;display:grid;place-items:center;background:linear-gradient(130deg,#e7c483,#b58d52);border-radius:10px;font-size:24px;color:#251c12}.brand h1{font-size:20px;letter-spacing:.055em;margin:0}.brand p{font-size:12px;color:var(--muted);margin:2px 0 0}
+.head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.action{border:1px solid #526977;color:#edf5f8;background:#223947;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;min-height:40px}.action:hover:not(:disabled){background:#2d4a58}.action.secondary{background:transparent}.action.primary{background:#dfb878;border-color:#dfb878;color:#1d232a}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(325px,415px);align-items:start;gap:20px}.left,.right{min-width:0}
+.state-banner{border:1px solid #436775;background:#1a3542;border-radius:13px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.turn-title{font-size:19px;font-weight:800}.turn-sub{font-size:12px;color:#c5d7dc;margin-top:3px}.state-tag{padding:6px 10px;border-radius:999px;background:#254a56;color:#cbecf3;border:1px solid #497687;white-space:nowrap;font-size:12px;font-weight:700}.state-tag.check{background:#5d2427;border-color:#ac5051;color:#ffe0d9}
+.playerbar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #344f5d;border-radius:11px;background:#152c39;margin:8px 0;padding:9px 12px;min-height:60px}.person{font-size:15px;font-weight:800;white-space:nowrap}.person .disc{display:inline-block;border-radius:50%;height:10px;width:10px;margin-right:7px;background:var(--gote)}.person.user .disc{background:var(--sente)}.small{font-size:11px;color:#a9bbc4;margin-top:3px}
+.hands{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}.no-hands{font-size:12px;color:#91a8b6}.hand{border-radius:8px;border:1px solid #90784f;background:linear-gradient(140deg,#f5dbac,#e9c48b);color:#322718;padding:4px 7px;min-height:36px;font-size:16px;font-weight:800}.hand small{font-size:10px;vertical-align:top;margin-left:2px}.hand.selected{outline:3px solid #4dd2ea;border-color:#236d77}.hand.static{padding:5px 8px;display:inline-block}
+.board-shell{width:100%;max-width:min(100%, calc(100dvh - 225px), 850px);margin:0 auto;border:8px solid #9a7543;border-radius:5px;background:#9a7543;box-shadow:0 10px 28px #040d14aa;position:relative}
+.board-coords-top{display:grid;grid-template-columns:repeat(9,1fr);font-size:12px;line-height:19px;height:19px;color:#24190d;background:#e9c78b;text-align:center;font-weight:700}.board-inner{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));width:100%;aspect-ratio:1;position:relative;background:#e7c48d}
+.square{border:0;border-right:1px solid #805b33;border-bottom:1px solid #805b33;background:#edce94;aspect-ratio:1;min-width:0;padding:0;position:relative;display:flex;align-items:center;justify-content:center;color:#24170b;touch-action:manipulation}
+.square:nth-child(9n+1){border-left:1px solid #805b33}.square:nth-child(-n+9){border-top:1px solid #805b33}.square.last-user-from{background:#b7d8d9}.square.last-user-to{background:#99c4cb}.square.last-ai-from{background:#f0d89d}.square.last-ai-to{background:#f2b56d}.square.selected{background:#73c9dc!important;box-shadow:inset 0 0 0 4px #1e7186;z-index:2}.square.destination{background:#a6daaf!important}.square.king-check{background:#f18887!important}
+.square .move-dot{position:absolute;width:27%;aspect-ratio:1;border-radius:100%;background:#367b4e88;z-index:1}.square .capture-ring{position:absolute;inset:5%;border:4px solid #3b8b64;border-radius:50%;z-index:1}
+.piece{width:79%;height:84%;display:grid;place-items:center;position:relative;clip-path:polygon(50% 0,96% 24%,88% 100%,12% 100%,4% 24%);background:#f9e7bb;filter:drop-shadow(1px 1px 2px #9b7654);border:0}.piece::before{content:"";position:absolute;inset:2px;background:#b68b52;clip-path:polygon(50% 0,96% 24%,88% 100%,12% 100%,4% 24%)}.piece::after{content:"";position:absolute;inset:4px;background:linear-gradient(140deg,#fce8bd,#eccb93);clip-path:polygon(50% 0,96% 24%,88% 100%,12% 100%,4% 24%)}.piece.enemy{transform:rotate(180deg)}.piece.enemy > span{transform:rotate(180deg)}.piece>span{position:relative;z-index:1;font-weight:900;font-family:"Yu Mincho","Hiragino Mincho ProN","Noto Serif JP",serif;font-size:clamp(15px,3.25vw,36px);line-height:1;color:#19140f}.piece.promoted>span{color:#ae302a}.square .last-arrow-icon{position:absolute;right:2px;bottom:0;font-size:10px;font-weight:700;opacity:.8}
+.file-label{position:absolute;right:-2px;bottom:-2px;background:#a47b43;padding:1px 2px;color:#16120c;font-size:10px;font-weight:700;transform:translateX(100%)}
+.instructions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:12px;color:#c9d9df;font-size:12px}.legend{display:flex;gap:12px;flex-wrap:wrap}.legend span{display:inline-flex;align-items:center;gap:5px}.swatch{width:12px;height:12px;border-radius:3px}.swatch.s{background:#99c4cb}.swatch.g{background:#f2b56d}.swatch.d{background:#a6daaf}
+.panel{background:var(--panel);border:1px solid #314c59;border-radius:14px;padding:15px 16px;margin-bottom:12px}.panel h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between}.panel h2 small{font-weight:400;color:#aac0c9;font-size:11px}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}.stat{border:1px solid #375360;border-radius:9px;padding:10px;background:#1c3440}.stat-title{font-size:11px;color:#aabec9}.stat-number{font-size:20px;font-weight:800;line-height:1.35;margin-top:3px}.stat-number.medium{font-size:15px}.stat-foot{font-size:10px;color:#a6b8c0;margin-top:2px}
+.lastpair{display:grid;grid-template-columns:1fr;gap:8px}.move-feature{border-radius:10px;padding:11px 12px;border-left:4px solid #79cfe0;background:#1b3b4b}.move-feature.gote{border-color:#eeb176;background:#3b3028}.feature-label{font-size:11px;color:#a9c3cc;margin-bottom:3px}.move-feature.gote .feature-label{color:#f2c6a1}.feature-move{font-size:22px;font-weight:900;letter-spacing:.02em}.feature-route{font-size:13px;margin-top:3px;color:#d9e8ee}.feature-detail{font-size:11px;color:#a9bdc7;margin-top:2px}
+.history-list{max-height:clamp(170px,28vh,320px);overflow-y:auto;border:1px solid #2e4956;border-radius:9px}.history-header,.history-row{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:start;padding:8px 9px}.history-header{background:#243e4c;color:#abbfc6;font-size:11px;font-weight:700;position:sticky;top:0}.history-row{border-top:1px solid #304c58}.history-row:nth-child(odd){background:#1b333f}.history-row .num{font-size:12px;color:#92a9b4;padding-top:3px}.history-cell{font-size:13px;line-height:1.45;overflow-wrap:anywhere}.history-cell strong{display:block;font-size:13px}.history-cell small{display:block;font-size:10px;color:#9eb6c2}.history-cell.last{background:#284956;border-radius:6px;padding:3px 4px;margin:-3px -4px}.history-cell.last.ai{background:#4b382a}
+.note{font-size:11px;line-height:1.6;color:#aebdc5;margin:10px 0 0}.hintbox{background:#234252;border:1px solid #467082;color:#d6eef3;padding:10px 12px;border-radius:9px;font-size:13px;margin:10px 0 0}.error{background:#5a2d2d;border-color:#9e4c4c;color:#f7dddd}.tip{margin-top:9px;color:#bccbd1;font-size:11px;line-height:1.65}
+.modal-back{inset:0;position:fixed;display:none;align-items:center;justify-content:center;background:#0a141bd9;z-index:99;padding:20px}.modal-back.active{display:flex}.modal{border:1px solid #66777d;background:#1b3542;border-radius:17px;padding:24px;text-align:center;max-width:360px;width:100%;box-shadow:0 10px 50px #0008}.modal h2{margin:0 0 7px}.modal p{font-size:13px;color:#bcd0d8}.modal-actions{display:flex;gap:8px;justify-content:center;margin-top:18px}
+@media(min-width:1080px){.right{position:sticky;top:12px}.board-shell{max-width:min(100%, calc(100dvh - 215px), 810px)}}
+@media(max-width:980px){.app{padding:10px 13px 25px}.layout{grid-template-columns:1fr}.board-shell{max-width:min(100%, calc(100dvh - 205px), 850px)}.right{display:grid;grid-template-columns:1fr 1fr;gap:12px}.panel{margin-bottom:0}.right>.panel:last-child{grid-column:1/-1}}
+@media(max-width:600px){.app{padding:9px 9px 26px}.brand h1{font-size:16px}.brand p{font-size:10px}.brandmark{width:31px;height:31px;font-size:20px}header{margin-bottom:10px}.head-actions{gap:5px}.action{padding:7px 9px;min-height:35px;font-size:11px}.layout{gap:12px}.board-shell{max-width:none;width:calc(100% - 16px);border-width:5px;margin-left:0}.board-coords-top{font-size:10px;height:15px;line-height:15px}.piece>span{font-size:clamp(14px,6vw,27px)}.file-label{font-size:9px}.state-banner{padding:9px 11px}.turn-title{font-size:16px}.turn-sub{font-size:10px}.state-tag{font-size:10px;padding:5px 7px}.playerbar{padding:7px 9px;min-height:49px}.person{font-size:13px}.small{font-size:10px}.hand{min-height:30px;padding:3px 6px;font-size:14px}.right{display:block}.panel{margin-bottom:10px;padding:12px}.summary{margin-bottom:10px}.feature-move{font-size:19px}.instructions{font-size:10px}.swatch{width:10px;height:10px}}
+@media(display-mode:fullscreen){.app{max-width:none}}:fullscreen .app{max-width:none}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+<header>
+ <div class="brand"><div class="brandmark">将</div><div><h1>アスオとの将棋対局</h1><p>盤面をタップして、そのまま続けられます</p></div></div>
+ <div class="head-actions"><button class="action" id="fullscreenBtn">⛶ 全画面</button><button class="action secondary" id="undoBtn">↶ 待った</button><button class="action secondary" id="resetBtn">↻ 再開</button></div>
+</header>
+<section class="layout">
+<div class="left">
+ <div class="state-banner"><div><div class="turn-title" id="turnTitle">あなたの手番</div><div class="turn-sub" id="turnSub">3手目。駒を選択してください。</div></div><span id="checkBadge" class="state-tag">対局中</span></div>
+ <div class="playerbar"><div><div class="person"><span class="disc"></span>△ アスオ</div><div class="small">後手・自動応手</div></div><div class="hands" id="aiHands"><span class="no-hands">持ち駒なし</span></div></div>
+ <noscript><div class="hintbox" style="margin-bottom:10px">駒は表示されていますが、このプレビューでは操作できません。ファイルをSafariなどのブラウザで開いてください。</div></noscript>
+ <div class="board-shell" aria-label="将棋盤、筋は右から1から9、段は上から一から九"><div class="board-coords-top"><span>９</span><span>８</span><span>７</span><span>６</span><span>５</span><span>４</span><span>３</span><span>２</span><span>１</span></div><div class="board-inner" id="board">
+<button type="button" class="square" data-cell="0" aria-label="9一 香"><span class="piece enemy"><span>香</span></span></button>
+<button type="button" class="square" data-cell="1" aria-label="8一 桂"><span class="piece enemy"><span>桂</span></span></button>
+<button type="button" class="square" data-cell="2" aria-label="7一 銀"><span class="piece enemy"><span>銀</span></span></button>
+<button type="button" class="square" data-cell="3" aria-label="6一 金"><span class="piece enemy"><span>金</span></span></button>
+<button type="button" class="square" data-cell="4" aria-label="5一 玉"><span class="piece enemy"><span>玉</span></span></button>
+<button type="button" class="square" data-cell="5" aria-label="4一 金"><span class="piece enemy"><span>金</span></span></button>
+<button type="button" class="square" data-cell="6" aria-label="3一 銀"><span class="piece enemy"><span>銀</span></span></button>
+<button type="button" class="square" data-cell="7" aria-label="2一 桂"><span class="piece enemy"><span>桂</span></span></button>
+<button type="button" class="square" data-cell="8" aria-label="1一 香"><span class="piece enemy"><span>香</span></span><span class="file-label">一</span></button>
+<button type="button" class="square" data-cell="9" aria-label="9二 空き"></button>
+<button type="button" class="square" data-cell="10" aria-label="8二 飛"><span class="piece enemy"><span>飛</span></span></button>
+<button type="button" class="square" data-cell="11" aria-label="7二 空き"></button>
+<button type="button" class="square" data-cell="12" aria-label="6二 空き"></button>
+<button type="button" class="square" data-cell="13" aria-label="5二 空き"></button>
+<button type="button" class="square" data-cell="14" aria-label="4二 空き"></button>
+<button type="button" class="square" data-cell="15" aria-label="3二 空き"></button>
+<button type="button" class="square" data-cell="16" aria-label="2二 角"><span class="piece enemy"><span>角</span></span></button>
+<button type="button" class="square" data-cell="17" aria-label="1二 空き"><span class="file-label">二</span></button>
+<button type="button" class="square" data-cell="18" aria-label="9三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="19" aria-label="8三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="20" aria-label="7三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="21" aria-label="6三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="22" aria-label="5三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="23" aria-label="4三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square last-ai-from" data-cell="24" aria-label="3三 空き"></button>
+<button type="button" class="square" data-cell="25" aria-label="2三 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="26" aria-label="1三 歩"><span class="piece enemy"><span>歩</span></span><span class="file-label">三</span></button>
+<button type="button" class="square" data-cell="27" aria-label="9四 空き"></button>
+<button type="button" class="square" data-cell="28" aria-label="8四 空き"></button>
+<button type="button" class="square" data-cell="29" aria-label="7四 空き"></button>
+<button type="button" class="square" data-cell="30" aria-label="6四 空き"></button>
+<button type="button" class="square" data-cell="31" aria-label="5四 空き"></button>
+<button type="button" class="square" data-cell="32" aria-label="4四 空き"></button>
+<button type="button" class="square last-ai-to" data-cell="33" aria-label="3四 歩"><span class="piece enemy"><span>歩</span></span></button>
+<button type="button" class="square" data-cell="34" aria-label="2四 空き"></button>
+<button type="button" class="square" data-cell="35" aria-label="1四 空き"><span class="file-label">四</span></button>
+<button type="button" class="square" data-cell="36" aria-label="9五 空き"></button>
+<button type="button" class="square" data-cell="37" aria-label="8五 空き"></button>
+<button type="button" class="square" data-cell="38" aria-label="7五 空き"></button>
+<button type="button" class="square" data-cell="39" aria-label="6五 空き"></button>
+<button type="button" class="square" data-cell="40" aria-label="5五 空き"></button>
+<button type="button" class="square" data-cell="41" aria-label="4五 空き"></button>
+<button type="button" class="square" data-cell="42" aria-label="3五 空き"></button>
+<button type="button" class="square" data-cell="43" aria-label="2五 空き"></button>
+<button type="button" class="square" data-cell="44" aria-label="1五 空き"><span class="file-label">五</span></button>
+<button type="button" class="square" data-cell="45" aria-label="9六 空き"></button>
+<button type="button" class="square" data-cell="46" aria-label="8六 空き"></button>
+<button type="button" class="square last-user-to" data-cell="47" aria-label="7六 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="48" aria-label="6六 空き"></button>
+<button type="button" class="square" data-cell="49" aria-label="5六 空き"></button>
+<button type="button" class="square" data-cell="50" aria-label="4六 空き"></button>
+<button type="button" class="square" data-cell="51" aria-label="3六 空き"></button>
+<button type="button" class="square" data-cell="52" aria-label="2六 空き"></button>
+<button type="button" class="square" data-cell="53" aria-label="1六 空き"><span class="file-label">六</span></button>
+<button type="button" class="square" data-cell="54" aria-label="9七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="55" aria-label="8七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square last-user-from" data-cell="56" aria-label="7七 空き"></button>
+<button type="button" class="square" data-cell="57" aria-label="6七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="58" aria-label="5七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="59" aria-label="4七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="60" aria-label="3七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="61" aria-label="2七 歩"><span class="piece "><span>歩</span></span></button>
+<button type="button" class="square" data-cell="62" aria-label="1七 歩"><span class="piece "><span>歩</span></span><span class="file-label">七</span></button>
+<button type="button" class="square" data-cell="63" aria-label="9八 空き"></button>
+<button type="button" class="square" data-cell="64" aria-label="8八 角"><span class="piece "><span>角</span></span></button>
+<button type="button" class="square" data-cell="65" aria-label="7八 空き"></button>
+<button type="button" class="square" data-cell="66" aria-label="6八 空き"></button>
+<button type="button" class="square" data-cell="67" aria-label="5八 空き"></button>
+<button type="button" class="square" data-cell="68" aria-label="4八 空き"></button>
+<button type="button" class="square" data-cell="69" aria-label="3八 空き"></button>
+<button type="button" class="square" data-cell="70" aria-label="2八 飛"><span class="piece "><span>飛</span></span></button>
+<button type="button" class="square" data-cell="71" aria-label="1八 空き"><span class="file-label">八</span></button>
+<button type="button" class="square" data-cell="72" aria-label="9九 香"><span class="piece "><span>香</span></span></button>
+<button type="button" class="square" data-cell="73" aria-label="8九 桂"><span class="piece "><span>桂</span></span></button>
+<button type="button" class="square" data-cell="74" aria-label="7九 銀"><span class="piece "><span>銀</span></span></button>
+<button type="button" class="square" data-cell="75" aria-label="6九 金"><span class="piece "><span>金</span></span></button>
+<button type="button" class="square" data-cell="76" aria-label="5九 玉"><span class="piece "><span>玉</span></span></button>
+<button type="button" class="square" data-cell="77" aria-label="4九 金"><span class="piece "><span>金</span></span></button>
+<button type="button" class="square" data-cell="78" aria-label="3九 銀"><span class="piece "><span>銀</span></span></button>
+<button type="button" class="square" data-cell="79" aria-label="2九 桂"><span class="piece "><span>桂</span></span></button>
+<button type="button" class="square" data-cell="80" aria-label="1九 香"><span class="piece "><span>香</span></span><span class="file-label">九</span></button>
+</div></div>
+ <div class="playerbar"><div><div class="person user"><span class="disc"></span>▲ あなた</div><div class="small">先手・下側の駒</div></div><div class="hands" id="myHands"><span class="no-hands">持ち駒なし</span></div></div>
+ <div class="instructions"><div class="legend"><span><i class="swatch s"></i>あなたの直前の手</span><span><i class="swatch g"></i>アスオの直前の手</span><span><i class="swatch d"></i>移動可能</span></div><div>駒 → 移動先の順でタップ</div></div>
+ <div id="hint" class="hintbox" role="status" aria-live="polite">駒をタップすると、動かせる場所が緑色になります。</div>
+</div>
+<aside class="right">
+ <section class="panel"><h2>戦況 <small>いまの局面</small></h2><div class="summary"><div class="stat"><div class="stat-title">現在の手数</div><div id="moveCounter" class="stat-number">3手目</div><div class="stat-foot">次に指す手の番号</div></div><div class="stat"><div class="stat-title">駒の損得</div><div id="material" class="stat-number medium">互角</div><div class="stat-foot">攻めや玉の安全は含みません</div></div></div><div class="lastpair" id="lastpair"></div></section>
+ <section class="panel"><h2>棋譜 <small>これまでの全指し手</small></h2><div class="history-list" id="historyList"></div><p class="note">左があなた、右がアスオです。矢印は駒が移動した位置を表します。</p></section>
+ <section class="panel"><h2>操作ガイド</h2><div class="tip">選んだ駒の移動先が緑色で表示されます。相手の駒を取ると持ち駒に加わり、持ち駒をタップして盤上に打てます。成れる場合は「成る／成らない」を選べます。</div><p class="note">対戦相手は簡易AIです。駒の損得表示は棋力評価ではありません。特殊な終局規則の一部は簡略化しています。</p><div class="tip" id="fullscreenHelp"></div></section>
+</aside>
+</section>
+</main>
+<div class="modal-back" id="promotionModal" role="dialog" aria-modal="true"><div class="modal"><h2>駒を成りますか？</h2><p id="promoExplain">成るか成らないかを選択してください。</p><div class="modal-actions"><button class="action primary" id="promoteYes">成る</button><button class="action" id="promoteNo">成らない</button><button class="action secondary" id="promoteCancel">戻る</button></div></div></div>
+<script>
+"use strict";
+const NUM="９８７６５４３２１".split(""),RANK="一二三四五六七八九".split("");
+const N={P:"歩",L:"香",N:"桂",S:"銀",G:"金",B:"角",R:"飛",K:"玉"};
+const NP={P:"と",L:"杏",N:"圭",S:"全",B:"馬",R:"龍"};
+const TYPES=["R","B","G","S","N","L","P"];
+const VALUE={P:100,L:300,N:330,S:450,G:550,B:800,R:1000,K:0};
+const toRC=i=>[Math.floor(i/9),i%9],idx=(r,c)=>r>=0&&r<9&&c>=0&&c<9?r*9+c:-1;
+const loc=i=>NUM[i%9]+RANK[Math.floor(i/9)],pname=p=>p?(p.pr?NP[p.k]:N[p.k]):"";
+const hands=()=>({P:0,L:0,N:0,S:0,G:0,B:0,R:0});
+const GOLD=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,0]];
+const DIR={P:{s:[[-1,0]],l:[]},L:{s:[],l:[[-1,0]]},N:{s:[[-2,-1],[-2,1]],l:[]},S:{s:[[-1,-1],[-1,0],[-1,1],[1,-1],[1,1]],l:[]},G:{s:GOLD,l:[]},K:{s:[...GOLD,[1,-1],[1,1]],l:[]},B:{s:[],l:[[-1,-1],[-1,1],[1,-1],[1,1]]},R:{s:[],l:[[-1,0],[1,0],[0,-1],[0,1]]}};
+function pattern(p){if(p.pr&&["P","L","N","S"].includes(p.k))return DIR.G;if(p.pr&&p.k==="B")return {s:[[-1,0],[1,0],[0,-1],[0,1]],l:DIR.B.l};if(p.pr&&p.k==="R")return {s:[[-1,-1],[-1,1],[1,-1],[1,1]],l:DIR.R.l};return DIR[p.k];}
+function newBase(){const b=Array(81).fill(null),back=["L","N","S","G","K","G","S","N","L"];
+ for(let c=0;c<9;c++){b[c]={k:back[c],s:-1,pr:false};b[18+c]={k:"P",s:-1,pr:false};b[54+c]={k:"P",s:1,pr:false};b[72+c]={k:back[c],s:1,pr:false};}
+ b[10]={k:"R",s:-1,pr:false};b[16]={k:"B",s:-1,pr:false};b[64]={k:"B",s:1,pr:false};b[70]={k:"R",s:1,pr:false};
+ return {b,h:{"1":hands(),"-1":hands()},turn:1,log:[]};}
+function reach(b,a,z){const p=b[a];if(!p||a===z)return false;const [r,c]=toRC(a),[tr,tc]=toRC(z),ds=pattern(p);
+ if(ds.s.some(([dr,dc])=>r+dr*p.s===tr&&c+dc===tc))return true;
+ for(const [dr,dc] of ds.l){let rr=r+dr*p.s,cc=c+dc;while(idx(rr,cc)>=0){const j=idx(rr,cc);if(j===z)return true;if(b[j])break;rr+=dr*p.s;cc+=dc;}}return false;}
+function threatened(g,side){const k=g.b.findIndex(p=>p?.s===side&&p.k==="K");return k===-1||g.b.some((p,i)=>p?.s===-side&&reach(g.b,i,k));}
+function moveText(g,m){const piece=m.drop?{k:m.drop,pr:false}:g.b[m.from];const taken=g.b[m.to],start=m.drop?"持ち駒":loc(m.from);
+ const symbol=(g.turn===1?"▲":"△"),promotion=!!m.prom;
+ const term=promotion?N[piece.k]+"成":pname(piece)+(m.drop?"打":"");
+ return {side:g.turn,from:m.from,to:m.to,drop:m.drop||"",promote:promotion,capture:taken?N[taken.k]:"",label:symbol+loc(m.to)+term,route:start+" → "+loc(m.to),detail:taken?N[taken.k]+"を取る":promotion?"成り":m.drop?"持ち駒を打つ":"通常の移動"};}
+function apply(g,m){const b=g.b.slice(),h={"1":{...g.h["1"]},"-1":{...g.h["-1"]}},s=g.turn,entry=moveText(g,m);
+ if(m.drop){h[String(s)][m.drop]--;b[m.to]={k:m.drop,s,pr:false};}
+ else{const p=b[m.from],taken=b[m.to];if(taken)h[String(s)][taken.k]++;b[m.from]=null;b[m.to]={...p,pr:p.pr||!!m.prom};}
+ return {b,h,turn:-s,log:[...g.log,entry]};}
+function pseudo(g){const out=[],s=g.turn;
+ for(let i=0;i<81;i++){const p=g.b[i];if(p?.s!==s)continue;const [r,c]=toRC(i),d=pattern(p);
+ const add=to=>{if(g.b[to]?.s===s||g.b[to]?.k==="K")return;const target=toRC(to)[0],zone=x=>s===1?x<=2:x>=6,may=!p.pr&&["P","L","N","S","B","R"].includes(p.k)&&(zone(r)||zone(target));const end=s===1?0:8,forced=(["P","L"].includes(p.k)&&target===end)||(p.k==="N"&&Math.abs(target-end)<2);if(may){out.push({from:i,to,prom:true});if(!forced)out.push({from:i,to,prom:false});}else out.push({from:i,to,prom:false});};
+ for(const [dr,dc] of d.s){const j=idx(r+dr*s,c+dc);if(j>=0)add(j);}
+ for(const [dr,dc] of d.l){let rr=r+dr*s,cc=c+dc;while(idx(rr,cc)>=0){const j=idx(rr,cc);if(g.b[j]?.s===s)break;add(j);if(g.b[j])break;rr+=dr*s;cc+=dc;}}
+ }
+ for(const type of TYPES){if(!g.h[String(s)][type])continue;for(let j=0;j<81;j++){if(g.b[j])continue;const [r,c]=toRC(j),end=s===1?0:8;
+ if(["P","L"].includes(type)&&r===end)continue;if(type==="N"&&Math.abs(r-end)<2)continue;
+ if(type==="P"&&g.b.some((p,i)=>p?.s===s&&p.k==="P"&&!p.pr&&toRC(i)[1]===c))continue;
+ out.push({from:-1,to:j,drop:type});}}
+ return out;}
+function legal(g,pawnMate=true){const moves=[];for(const m of pseudo(g)){const n=apply(g,m);if(threatened(n,g.turn))continue;
+ if(pawnMate&&m.drop==="P"&&threatened(n,-g.turn)&&legal(n,false).length===0)continue;
+ moves.push(m);}return moves;}
+function start(){let g=newBase();g=apply(g,{from:56,to:47,prom:false});g=apply(g,{from:24,to:33,prom:false});return g;}
+function chooseAI(g){const moves=legal(g);if(!moves.length)return null;let best=moves[0],max=-Infinity;
+ for(const m of moves){const p=m.from<0?null:g.b[m.from],taken=g.b[m.to],n=apply(g,m);
+ let score=(taken?VALUE[taken.k]*0.20:0)+(m.prom?60:0);
+ if(p){const advance=toRC(m.to)[0]-toRC(m.from)[0];score+=advance*(p.k==="P"?5:p.k==="S"?3:p.k==="K"?-3:1.4);}
+ if(m.drop)score-=VALUE[m.drop]*0.015;
+ if(threatened(n,1))score+=35;
+ if(n.b.some((q,i)=>q?.s===1&&reach(n.b,i,m.to)))score-=VALUE[n.b[m.to].k]*0.14;
+ score+=((m.to*17+(m.from+2)*13+g.log.length*11)%29)*0.14;
+ if(score>max){max=score;best=m;}}
+ return best;}
+const el=id=>document.getElementById(id);
+let trail=[start()],selectedFrom=-1,selectedHand="",pendingPromotion=null,botWaiting=false,botTimer=null,hintText="駒をタップすると、動かせる場所が緑色になります。";
+const storageKey="asuo-shogi-board-v4";
+try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&Array.isArray(saved.trail)&&saved.trail.length&&saved.trail[0].log?.length===2&&saved.trail.at(-1).b?.length===81){trail=saved.trail;}}catch(e){}
+const current=()=>trail[trail.length-1];
+const latest=(side)=>[...current().log].reverse().find(x=>x.side===side);
+function material(g){let a=0,b=0;g.b.forEach(p=>{if(p&&p.k!=="K"){if(p.s===1)a+=VALUE[p.k];else b+=VALUE[p.k];}});TYPES.forEach(t=>{a+=g.h["1"][t]*VALUE[t];b+=g.h["-1"][t]*VALUE[t];});return a-b;}
+function targetsFor(moves){return selectedHand?moves.filter(m=>m.drop===selectedHand):selectedFrom>=0?moves.filter(m=>!m.drop&&m.from===selectedFrom):[];}
+function showMessage(m){hintText=m;el("hint").textContent=m;}
+function save(){try{localStorage.setItem(storageKey,JSON.stringify({trail}));}catch(e){}}
+function viewMove(m,kind){if(!m)return `<div class="move-feature ${kind}"><div class="feature-label">まだ指していません</div></div>`;
+ return `<div class="move-feature ${kind}"><div class="feature-label">${m.side===1?"▲ あなたの直前の手":"△ アスオの直前の手"}</div><div class="feature-move">${m.label}</div><div class="feature-route">${m.route}</div><div class="feature-detail">${m.detail}</div></div>`;}
+function updateUI(){const g=current(),moves=botWaiting?[]:legal(g),check=threatened(g,g.turn),ended=!botWaiting&&moves.length===0;
+ const me=latest(1),ai=latest(-1),tar=targetsFor(moves),chosenTargets=new Set(tar.map(m=>m.to));
+ let title=botWaiting?"アスオが指しています…":ended?(g.turn===1?"アスオの勝ち":"あなたの勝ち"):check?"王手！ あなたの玉が狙われています":"あなたの手番";
+ if(!ended&&!botWaiting&&g.turn!==1)title="アスオの手番";
+ el("turnTitle").textContent=title;
+ el("turnSub").textContent=ended?(check?"詰み。対局終了です。":"合法手がありません。対局終了です。"):botWaiting?"応手を選択中です。":`${g.log.length+1}手目。${selectedHand?N[selectedHand]+"を打つ場所を選んでください。":selectedFrom>=0?loc(selectedFrom)+"の"+pname(g.b[selectedFrom])+"の移動先を選んでください。":"駒を選択してください。"}`;
+ el("checkBadge").textContent=ended?"対局終了":check?"王手":"対局中";el("checkBadge").classList.toggle("check",check);
+ el("moveCounter").textContent=(g.log.length+1)+"手目";
+ const mat=material(g);el("material").textContent=mat===0?"駒得は互角":mat>0?"あなたが駒得":"アスオが駒得";
+ el("lastpair").innerHTML=viewMove(me,"")+viewMove(ai,"gote");
+ const lastIndex=g.log.length-1;
+ let history=`<div class="history-header"><span>手</span><span>▲ あなた</span><span>△ アスオ</span></div>`;
+ for(let i=0;i<g.log.length;i+=2){history+=`<div class="history-row"><span class="num">${Math.floor(i/2)+1}</span>`;
+ for(let j=i;j<i+2;j++){const m=g.log[j];history+=m?`<span class="history-cell ${j===lastIndex?"last "+(m.side===-1?"ai":""):""}"><strong>${m.label}</strong><small>${m.route}</small></span>`:`<span class="history-cell"></span>`;}
+ history+="</div>";}
+ el("historyList").innerHTML=history;
+ function handView(s){return TYPES.filter(t=>g.h[String(s)][t]>0).map(k=>s===1?`<button class="hand ${selectedHand===k?"selected":""}" data-hand="${k}" aria-label="持ち駒 ${N[k]} ${g.h["1"][k]}枚">${N[k]}<small>×${g.h["1"][k]}</small></button>`:`<span class="hand static">${N[k]}<small>×${g.h["-1"][k]}</small></span>`).join("")||`<span class="no-hands">持ち駒なし</span>`;}
+ el("myHands").innerHTML=handView(1);el("aiHands").innerHTML=handView(-1);
+ el("myHands").querySelectorAll("[data-hand]").forEach(btn=>btn.addEventListener("click",()=>{if(botWaiting||ended||g.turn!==1)return;selectedHand=selectedHand===btn.dataset.hand?"":btn.dataset.hand;selectedFrom=-1;showMessage(selectedHand?`${N[selectedHand]}を打つ場所を選んでください。`:"駒を選んでください。");updateUI();}));
+ let markup="";
+ const checkKing=check?g.b.findIndex(p=>p?.s===g.turn&&p.k==="K"):-1;
+ for(let i=0;i<81;i++){const p=g.b[i],classes=["square"];
+ if(me?.from===i)classes.push("last-user-from");if(me?.to===i)classes.push("last-user-to");
+ if(ai?.from===i)classes.push("last-ai-from");if(ai?.to===i)classes.push("last-ai-to");
+ if(chosenTargets.has(i))classes.push("destination");
+ if(selectedFrom===i)classes.push("selected");
+ if(checkKing===i)classes.push("king-check");
+ const name=pname(p),point=`${loc(i)} ${p?(p.s===1?"先手":"後手")+name:"空き"}`;
+ markup+=`<button class="${classes.join(" ")}" data-cell="${i}" aria-label="${point}">`;
+ if(chosenTargets.has(i))markup+=p?`<span class="capture-ring"></span>`:`<span class="move-dot"></span>`;
+ if(p)markup+=`<span class="piece ${p.s===-1?"enemy":""} ${p.pr?"promoted":""}"><span>${name}</span></span>`;
+ if(i%9===8)markup+=`<span class="file-label">${RANK[Math.floor(i/9)]}</span>`;
+ markup+="</button>";
+ }
+ el("board").innerHTML=markup;el("board").querySelectorAll("[data-cell]").forEach(btn=>btn.addEventListener("click",()=>tap(Number(btn.dataset.cell))));
+ el("undoBtn").disabled=trail.length<=1;el("hint").textContent=hintText;
+}
+function cancelBot(){if(botTimer!==null){clearTimeout(botTimer);botTimer=null;}botWaiting=false;}
+function commit(m){pendingPromotion=null;el("promotionModal").classList.remove("active");selectedFrom=-1;selectedHand="";
+ trail.push(apply(current(),m));save();
+ if(legal(current()).length===0){showMessage("対局が終了しました。棋譜で最後の一手をご確認ください。");updateUI();return;}
+ botWaiting=true;showMessage("あなたの一手を反映しました。アスオが応手を選んでいます。");updateUI();
+ botTimer=setTimeout(()=>{botTimer=null;const g=current(),bot=chooseAI(g);if(bot){trail.push(apply(g,bot));save();}botWaiting=false;
+ showMessage(legal(current()).length===0?"対局終了です。棋譜をご確認ください。":"アスオが指しました。次はあなたの番です。緑色のマスが移動可能な位置です。");updateUI();},450);
+}
+function tap(i){const g=current();if(botWaiting||pendingPromotion||g.turn!==1)return;const moves=legal(g);if(!moves.length)return;
+ const choices=targetsFor(moves).filter(m=>m.to===i);
+ if(choices.length){if(choices.length===2){pendingPromotion=choices;el("promoExplain").textContent=loc(choices[0].from)+" → "+loc(i)+"："+pname(g.b[choices[0].from]);el("promotionModal").classList.add("active");return;}commit(choices[0]);return;}
+ if(g.b[i]?.s===1){selectedFrom=selectedFrom===i?-1:i;selectedHand="";showMessage(selectedFrom>=0?`${loc(i)}の${pname(g.b[i])}を選択しました。緑色のマスをタップしてください。`:"選択を解除しました。");updateUI();return;}
+ showMessage("そのマスには動けません。自分の駒を選択し、緑色のマスをタップしてください。");
+}
+el("promoteYes").addEventListener("click",()=>{if(pendingPromotion)commit(pendingPromotion.find(m=>m.prom));});
+el("promoteNo").addEventListener("click",()=>{if(pendingPromotion)commit(pendingPromotion.find(m=>!m.prom));});
+el("promoteCancel").addEventListener("click",()=>{pendingPromotion=null;el("promotionModal").classList.remove("active");});
+el("undoBtn").addEventListener("click",()=>{cancelBot();if(trail.length<=1)return;const cut=(current().turn===1?2:1);trail=trail.slice(0,Math.max(1,trail.length-cut));selectedFrom=-1;selectedHand="";pendingPromotion=null;el("promotionModal").classList.remove("active");save();showMessage("直前のあなたとアスオの指し手を取り消しました。");updateUI();});
+el("resetBtn").addEventListener("click",()=>{if(!confirm("▲７六歩 △３四歩の局面からやり直しますか？"))return;cancelBot();trail=[start()];selectedFrom=-1;selectedHand="";pendingPromotion=null;el("promotionModal").classList.remove("active");save();showMessage("▲７六歩 △３四歩の局面に戻りました。あなたの手番です。");updateUI();});
+const fullBtn=el("fullscreenBtn");fullBtn.addEventListener("click",async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else throw Error("unavailable");}catch(e){alert("このブラウザでは全画面切替を使えません。iPhoneの場合はSafariの『共有』から『ホーム画面に追加』すると、画面を広く使えます。");}});
+document.addEventListener("fullscreenchange",()=>{fullBtn.textContent=document.fullscreenElement?"⤢ 全画面終了":"⛶ 全画面";});
+el("fullscreenHelp").textContent=/iPhone|iPad|iPod/.test(navigator.userAgent)?"iPhone/iPadで全画面ボタンが使えない場合は、Safariの「共有」から「ホーム画面に追加」して開いてください。":"「⛶ 全画面」ボタンでブラウザの全画面表示を切り替えられます。";
+if(current().turn===-1){
+ botWaiting=true;
+ showMessage("中断されたアスオの手番を再開しています。");
+ botTimer=setTimeout(()=>{
+  botTimer=null;
+  const bot=chooseAI(current());
+  if(bot){trail.push(apply(current(),bot));save();}
+  botWaiting=false;
+  showMessage("アスオが指しました。あなたの番です。");
+  updateUI();
+ },450);
+}
+updateUI();
+</script>
+</body>
+</html>
